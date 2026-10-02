@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#121a2b">
+<title>คำนวณการเบิกใช้ทราย CDE — Version 3</title>
+<style>
+:root{
+  --bg:#eef1f5;--card:#fff;--soft:#f7f9fc;--text:#172033;--muted:#64748b;
+  --line:#d8dee8;--blue:#2563eb;--gold:#d97706;--green:#15803d;--red:#b91c1c;
+  --shadow:0 8px 24px #0f172a14
+}
+.dark{
+  --bg:#0b1220;--card:#111a2b;--soft:#172236;--text:#e5edf9;--muted:#9aa9bd;
+  --line:#29364b;--blue:#60a5fa;--gold:#f59e0b;--green:#4ade80;--red:#f87171;
+  --shadow:0 10px 28px #0005
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,"Noto Sans Thai",sans-serif}
+button,input,select{font:inherit}
+button{touch-action:manipulation}
+.topBar{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
+.topIn{max-width:1250px;margin:auto;display:flex;align-items:center;justify-content:space-between;padding:10px 16px;gap:12px;flex-wrap:wrap}
+.navBar{background:var(--card);border-bottom:1px solid var(--line);box-shadow:0 2px 4px #00000008}
+.navIn{max-width:1250px;margin:auto;display:flex;gap:6px;padding:8px 16px;overflow-x:auto}
+.navTab{border:1px solid transparent;background:transparent;color:var(--muted);border-radius:8px;padding:8px 14px;font-weight:700;font-size:13px;white-space:nowrap;display:flex;align-items:center;gap:6px;cursor:pointer}
+.navTab:hover{background:var(--soft);color:var(--text)}
+.navTab.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.wrap{max-width:1250px;margin:auto;padding:16px 16px 45px}
+.hero{background:linear-gradient(135deg,#172033,#29456f);color:#fff;border-radius:16px;padding:18px 20px;box-shadow:var(--shadow);margin-bottom:16px}
+.heroGrid{display:grid;grid-template-columns:1.3fr repeat(3,1fr);gap:14px;align-items:center}
+.heroMain h1{margin:0 0 4px;font-size:22px;letter-spacing:-.3px}
+.heroMain small{opacity:.85;font-size:13px}
+.metric{background:#ffffff15;border:1px solid #ffffff25;border-radius:12px;padding:12px 14px}
+.metric span{display:block;font-size:11px;opacity:.85;margin-bottom:4px}
+.metric strong{font-size:20px;font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
+.c12{grid-column:span 12}.c7{grid-column:span 7}.c6{grid-column:span 6}.c5{grid-column:span 5}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow)}
+.head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.head h3{margin:0;font-size:16px;display:flex;align-items:center;gap:6px}
+.muted{color:var(--muted);font-size:12px}
+.formGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px;font-weight:600}
+input,select{width:100%;border:1px solid var(--line);background:var(--soft);color:var(--text);border-radius:8px;padding:9px 12px;font-size:14px}
+input:focus,select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px #2563eb25}
+.btn{background:var(--soft);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:9px 14px;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{filter:brightness(.96)}
+.btn.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn.success{background:var(--green);color:#fff;border-color:var(--green)}
+.btn.danger{background:var(--red);color:#fff;border-color:var(--red)}
+.btn.sm{padding:6px 10px;font-size:12px}
+.toolbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.tableWrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:9px 12px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{background:var(--soft);color:var(--muted);font-size:12px;font-weight:700}
+tr:last-child td{border-bottom:none}
+.badge{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700}
+.badge.info{background:#2563eb18;color:var(--blue)}
+.badge.warning{background:#d9770618;color:var(--gold)}
+.badge.success{background:#15803d18;color:var(--green)}
+.badge.danger{background:#b91c1c18;color:var(--red)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:12px}
+.kpi{background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.kpi span{display:block;font-size:11px;color:var(--muted)}
+.kpi b{font-size:16px}
+.pageSection{display:none}
+.pageSection.active{display:block}
+.notice{background:var(--soft);border-left:4px solid var(--blue);border-radius:6px;padding:10px 14px;font-size:12px;margin-bottom:12px}
+.footer{margin-top:35px;text-align:center;font-size:12px;color:var(--muted)}
+canvas{width:100%;height:320px;display:block}
+#printPage{display:none;background:#fff;color:#000;padding:20px}
+.printCard{border:1px solid #ccc;padding:16px;border-radius:8px;max-width:900px;margin:auto}
+.modalBack{position:fixed;inset:0;background:#0009;display:none;align-items:center;justify-content:center;padding:16px;z-index:100}
+.modalBack.show{display:flex}
+.modal{width:min(620px,100%);background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:16px;box-shadow:0 20px 60px #0008;padding:18px}
+.modal h3{margin:0}
+.modalActions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.statusBtn{min-width:72px;justify-content:center}
+.empty{padding:24px;text-align:center;color:var(--muted)}
+.center{text-align:center}
+
+/* ============ EXECUTIVE DASHBOARD (dark, always) ============ */
+.dsh{--d-bg:#0a1120;--d-card:#0f1a2e;--d-line:#1b2a45;--d-track:#15223b;--d-text:#e8eefb;--d-mut:#8a9ab3;
+  --d-or:#f2903c;--d-bl:#3b82f6;--d-cy:#38bdf8;--d-gr:#22c55e;--d-rd:#ef4444;--d-am:#f59e0b;
+  background:var(--d-bg);color:var(--d-text);border:1px solid var(--d-line);border-radius:18px;padding:0;display:grid;grid-template-columns:214px minmax(0,1fr);overflow:hidden;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact}
+.dMain{padding:18px;min-width:0}
+.dsh *{box-sizing:border-box}
+.dNav{background:#0b1426;border-right:1px solid var(--d-line);padding:16px 12px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.dNav .lg{display:flex;align-items:center;gap:9px}
+.dNav .lgo{width:34px;height:34px;border-radius:9px;background:var(--d-or);color:#1a1205;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none}
+.dNav .lg b{display:block;font-size:13px}
+.dNav .lg span{display:block;font-size:9.5px;color:var(--d-or);letter-spacing:.4px}
+.dNav .src{font-size:10.5px;color:var(--d-mut);line-height:1.5}
+.dNav .mn{display:flex;flex-direction:column;gap:4px}
+.dNav .mn button{display:flex;align-items:center;gap:8px;text-align:left;background:transparent;border:0;color:var(--d-mut);font-size:12.5px;font-weight:700;padding:10px 11px;border-radius:9px;cursor:pointer;white-space:nowrap}
+.dNav .mn button:hover{background:#111e36;color:var(--d-text)}
+.dNav .mn button.on{background:linear-gradient(90deg,#f2903c,#f7a95a);color:#1a1205}
+.dNav .mn em{margin-left:auto;font-style:normal;background:var(--d-rd);color:#fff;font-size:10px;border-radius:999px;padding:1px 7px}
+.dNav .goal{margin-top:auto;background:var(--d-card);border:1px solid var(--d-line);border-radius:11px;padding:12px;font-size:11px;color:var(--d-mut)}
+.dNav .goal .t{font-size:11px}
+.dNav .goal .row{display:flex;justify-content:space-between;align-items:baseline;margin-top:8px}
+.dNav .goal .row b{color:var(--d-text);font-size:13px}
+.dNav .goal .pt{height:5px;background:var(--d-track);border-radius:3px;margin-top:5px}
+.dNav .goal .pt i{display:block;height:100%;border-radius:3px}
+.dNav .goal .st{display:inline-block;margin-top:10px;padding:3px 9px;border-radius:999px;font-size:10.5px;font-weight:700}
+.dHead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.dHead h2{margin:0;font-size:21px;letter-spacing:-.2px}
+.dHead small{display:block;margin-top:3px;color:var(--d-mut);font-size:12px}
+.dFilters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.dFilters label.fl{display:flex;align-items:center;gap:6px;margin:0;background:var(--d-card);border:1px solid var(--d-line);border-radius:8px;padding:0 8px 0 10px;font-size:12px;color:var(--d-mut);font-weight:600}
+.dFilters select,.dFilters input{width:auto;background:transparent;border:0;color:var(--d-text);font-weight:700;padding:9px 2px;font-size:12px;box-shadow:none;color-scheme:dark}
+.dFilters select option{background:#0f1a2e;color:#e8eefb}
+.dBtn{background:var(--d-card);color:var(--d-text);border:1px solid var(--d-line);border-radius:8px;padding:9px 13px;font-size:12px;font-weight:700;cursor:pointer}
+.dBtn:hover{border-color:#2b4068}
+.dBtn.or{background:var(--d-or);border-color:var(--d-or);color:#1a1205}
+.dKpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.kp{display:flex;align-items:center;gap:10px;background:var(--d-card);border:1px solid var(--d-line);border-radius:12px;padding:12px}
+.kp .ring{width:52px;height:52px;flex:none}
+.kp div{min-width:0}
+.kp span{display:block;font-size:11px;color:var(--d-mut)}
+.kp b{display:block;font-size:19px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kp small{display:block;font-size:11px;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.up{color:var(--d-gr)}.dn{color:var(--d-rd)}.mu{color:var(--d-mut)}
+.dRow{display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:12px;margin-top:12px}
+.dCard{background:var(--d-card);border:1px solid var(--d-line);border-radius:12px;padding:14px;min-width:0}
+.dCard h4{margin:0 0 12px;font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.dCard h4 em{font-style:normal;font-size:11px;color:var(--d-or);font-weight:600}
+.dEmpty{padding:30px 0;text-align:center;color:var(--d-mut);font-size:12px}
+.hb{display:grid;grid-template-columns:82px 1fr 74px;gap:8px;align-items:center;margin:9px 0;font-size:12px}
+.hb .hbl{color:var(--d-mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hb b{text-align:right;font-size:12px}
+.hbt{position:relative;height:14px;background:var(--d-track);border-radius:4px}
+.hbf{height:100%;border-radius:4px;background:linear-gradient(90deg,#1d4ed8,#3b82f6 60%,#60a5fa)}
+.hbm{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--d-or);border-radius:1px}
+.lgd{display:flex;gap:14px;font-size:10.5px;color:var(--d-mut);margin:4px 0 10px;flex-wrap:wrap}
+.lgd i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;vertical-align:baseline}
+.lgd i.m{width:2px;height:10px;border-radius:0;vertical-align:middle}
+.dLine{height:1px;background:var(--d-line);margin:10px 0}
+.lst{display:grid;grid-template-columns:10px 1fr auto 52px;gap:8px;align-items:center;font-size:12px;padding:7px 0;border-bottom:1px solid #15223b}
+.lst:last-child{border-bottom:0}
+.lst i{width:8px;height:8px;border-radius:50%}
+.lst .g{color:var(--d-gr);font-weight:700}
+.lst .r{text-align:right;color:var(--d-mut)}
+.dn2{display:flex;align-items:center;gap:6px}
+.dn2 svg{width:190px;height:190px;flex:none}
+.dn2 .lg{flex:1;min-width:0;font-size:12px}
+.dn2 .lg div{display:flex;align-items:center;gap:7px;padding:6px 0;border-bottom:1px solid #15223b}
+.dn2 .lg div:last-child{border:0}
+.dn2 .lg i{width:8px;height:8px;border-radius:50%;flex:none}
+.dn2 .lg span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dn2 .lg b{font-size:12px}
+.sk{display:flex;gap:8px}
+.sky{display:flex;flex-direction:column;justify-content:space-between;height:190px;font-size:10px;color:var(--d-mut);text-align:right;padding-bottom:0}
+.skw{flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.skc{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:10.5px;color:var(--d-mut)}
+.skb{width:100%;height:190px;display:flex;flex-direction:column-reverse;background:var(--d-track);border-radius:3px;overflow:hidden}
+.seg{display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;min-height:0;overflow:hidden}
+.seg.c{background:var(--d-bl)}.seg.n{background:var(--d-or)}
+.dtw{overflow-x:auto}
+.dsh table{font-size:12px}
+.dsh th{background:transparent;color:var(--d-mut);border-bottom:1px solid var(--d-line);padding:8px 10px}
+.dsh td{border-bottom:1px solid #15223b;padding:9px 10px}
+.dsh td.r,.dsh th.r{text-align:right}
+.dsh tr.tot td{font-weight:700;border-top:1px solid var(--d-line);border-bottom:0}
+.dsh td i.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px}
+#dTrend{height:240px}
+.cp{margin:10px 0 14px}
+.cp>div:first-child{display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px}
+.cp .pt{height:5px;background:var(--d-track);border-radius:3px}
+.cp .pt i{display:block;height:100%;border-radius:3px}
+.dSub{font-size:11px;color:var(--d-mut);margin:14px 0 4px}
+.al{display:flex;gap:9px;border-radius:9px;padding:9px 10px;margin-top:8px;font-size:12px;border:1px solid}
+.al .ic{flex:none;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;margin-top:1px}
+.al b{display:block;font-size:12px}
+.al span{color:var(--d-mut);font-size:11px}
+.al.rd{background:#2a1218;border-color:#5b1f2a}.al.rd .ic{background:var(--d-rd)}.al.rd b{color:#ff8a94}
+.al.wn{background:#2a2010;border-color:#5b4519}.al.wn .ic{background:var(--d-am)}.al.wn b{color:#fbbf60}
+.al.in{background:#0f1f38;border-color:#1f3a66}.al.in .ic{background:var(--d-bl)}.al.in b{color:#8ab8ff}
+.al.ok{background:#0e2419;border-color:#1d5236}.al.ok .ic{background:var(--d-gr)}.al.ok b{color:#6ee7a0}
+
+@media(max-width:1000px){.dKpis{grid-template-columns:repeat(2,1fr)}.dRow{grid-template-columns:1fr}.dsh{grid-template-columns:1fr}.dNav{border-right:0;border-bottom:1px solid var(--d-line);padding:12px}.dNav .mn{flex-direction:row;overflow-x:auto}.dNav .goal,.dNav .src{display:none}}
+@media(max-width:900px){.heroGrid{grid-template-columns:1fr 1fr}.c7,.c6,.c5{grid-column:span 12}}
+@media(max-width:600px){
+  .heroGrid{grid-template-columns:1fr}
+  .topIn{align-items:flex-start}
+  .card{padding:13px}
+  th,td{padding:8px 10px}
+  .dMain{padding:12px}
+  .dKpis{grid-template-columns:1fr}
+  .dn2{flex-direction:column}
+}
+@media print{
+  body{background:#fff!important;color:#000!important}
+  body *{visibility:hidden!important}
+  #printPage,#printPage *{visibility:visible!important}
+  #printPage{display:block!important;position:absolute;inset:0}
+  #printPage .btn{display:none!important}
+  body.printDash #printPage,body.printDash #printPage *{visibility:hidden!important}
+  body.printDash #tab-dashboard,body.printDash #tab-dashboard *{visibility:visible!important}
+  body.printDash #tab-dashboard{position:absolute;left:0;top:0;width:100%}
+  body.printDash .dFilters,body.printDash .dNav{display:none!important}
+  body.printDash .dsh{display:block}
+}
+</style>
+</head>
+<body>
+<header class="topBar">
+  <div class="topIn">
+    <div>
+      <b style="font-size:16px">ระบบคำนวณและควบคุมการเบิกใช้ทราย</b>
+      <div style="font-size:12px;color:var(--muted)">CDE Sand & Normal Sand Control System · Version 3</div>
+    </div>
+    <div class="toolbar">
+      <button class="btn sm" id="theme">🌓 ธีม</button>
+      <button class="btn sm primary" id="openPrintBtn">🖨️ Print Out Mix</button>
+    </div>
+  </div>
+</header>
+
+<nav class="navBar">
+  <div class="navIn">
+    <button class="navTab active" data-page="tab-record">➕ บันทึก / สร้าง Round</button>
+    <button class="navTab" data-page="tab-chart">📈 กราฟ & ประวัติการเบิกใช้</button>
+    <button class="navTab" data-page="tab-dashboard">📊 Dashboard</button>
+    <button class="navTab" data-page="tab-system">⚙️ จัดการระบบ</button>
+  </div>
+</nav>
+
+<main class="wrap" id="main">
+<section class="hero" id="heroSec">
+  <div class="heroGrid">
+    <div class="heroMain">
+      <h1>CDE & Normal Sand Usage Control</h1>
+      <small>ระบบควบคุมการเบิกใช้ทราย CDE และรายงานสรุปประจำวัน</small>
+    </div>
+    <div class="metric"><span>CDE ประจำวันที่เลือก</span><strong id="heroCde">0.000 t</strong></div>
+    <div class="metric"><span>Normal ประจำวันที่เลือก</span><strong id="heroNorm">0.000 t</strong></div>
+    <div class="metric"><span>CDE สะสมทั้งหมด</span><strong id="heroAll">0.000 t</strong></div>
+  </div>
+</section>
+
+<div id="tab-record" class="pageSection active">
+  <div class="grid">
+    <section class="card c6">
+      <div class="head">
+        <h3>➕ บันทึกการเบิกใช้ทราย / สร้าง Round</h3>
+        <span class="muted">บันทึกยอดคอนกรีตและคำนวณน้ำหนักทราย</span>
+      </div>
+      <form id="entryForm">
+        <div class="formGrid">
+          <div><label>วันที่</label><input id="eDate" type="date" required></div>
+          <div><label>Mix Design</label><select id="eMix" required></select></div>
+          <div><label>ปริมาณคอนกรีต (m³)</label><input id="eQty" type="number" step="0.01" min="0.01" placeholder="เช่น 5.0" required></div>
+        </div>
+        <div class="kpis">
+          <div class="kpi"><span>สูตร / Variant</span><b id="pVariant" style="font-size:14px">-</b></div>
+          <div class="kpi"><span>CDE ที่ต้องใช้</span><b id="pCde" style="color:var(--blue)">0.0 kg</b></div>
+          <div class="kpi"><span>Normal ที่ต้องใช้</span><b id="pNorm" style="color:var(--gold)">0.0 kg</b></div>
+        </div>
+        <div class="toolbar" style="margin-top:14px;justify-content:flex-end">
+          <button type="submit" class="btn primary">＋ บันทึกรายการนี้</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="card c6">
+      <div class="head">
+        <div>
+          <h3>🧱 ตาราง Mix Design</h3>
+          <span class="muted">ประวัติเดิมจะคงค่า CDE/Normal ตาม ณ วันที่บันทึก</span>
+        </div>
+        <div class="toolbar">
+          <button type="button" class="btn sm primary" id="addMix">＋ เพิ่ม Mix</button>
+          <button type="button" class="btn sm" id="toggleMix">ซ่อน/แสดง</button>
+        </div>
+      </div>
+      <div id="mixTable"></div>
+    </section>
+  </div>
+</div>
+
+<div id="tab-chart" class="pageSection">
+  <div class="grid">
+    <section class="card c12">
+      <div class="head">
+        <div><h3>📈 กราฟการเบิกใช้รายวัน (ทราย CDE & ทรายธรรมดา)</h3><span class="muted" id="chartRange">กำลังโหลดช่วงวันที่...</span></div>
+        <div class="toolbar">
+          <label style="margin:0;display:flex;align-items:center;gap:4px"><span class="muted">จาก:</span><input id="chartFrom" type="date" style="width:auto;padding:4px 8px;font-size:12px"></label>
+          <label style="margin:0;display:flex;align-items:center;gap:4px"><span class="muted">ถึง:</span><input id="chartTo" type="date" style="width:auto;padding:4px 8px;font-size:12px"></label>
+          <button class="btn sm" id="chartPreset7">7 วันล่าสุด</button>
+          <button class="btn sm" id="chartPreset14">14 วัน</button>
+          <button class="btn sm" id="chartPreset30">30 วัน</button>
+          <button class="btn sm" id="chartReset">ทั้งหมด</button>
+        </div>
+      </div>
+      <div style="background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:14px"><canvas id="chart"></canvas></div>
+      <div style="margin-top:10px;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <span>* กราฟเปรียบเทียบยอดเบิกใช้ทราย CDE และทรายธรรมดารายวัน</span>
+        <button class="btn sm success" id="chartExportCsv">📥 ส่งออก CSV ข้อมูลกราฟ</button>
+      </div>
+    </section>
+
+    <section class="card c12">
+      <div class="head">
+        <div><h3>🧾 ประวัติการเบิกใช้ทั้งหมดในระบบ</h3><span class="muted">รายการทั้งหมดที่เก็บใน LocalStorage</span></div>
+        <div class="toolbar">
+          <input id="historySearchTab" placeholder="ค้นหา วันที่ / Mix / Variant" style="max-width:220px;padding:6px 10px;font-size:12px">
+          <button class="btn success sm" id="historyTabCsv">📥 ส่งออกประวัติทั้งหมด (CSV)</button>
+        </div>
+      </div>
+      <div class="kpis" style="margin-bottom:14px">
+        <div class="kpi"><span>รายการเบิกใช้ทั้งหมด</span><b id="histTotalCount">0 รายการ</b></div>
+        <div class="kpi"><span>คอนกรีตรวมสะสม</span><b id="histTotalQty">0.00 m³</b></div>
+        <div class="kpi"><span>ทราย CDE รวมสะสม</span><b id="histTotalCde" style="color:var(--blue)">0.000 t</b></div>
+        <div class="kpi"><span>ทรายธรรมดารวมสะสม</span><b id="histTotalNorm" style="color:var(--gold)">0.000 t</b></div>
+      </div>
+      <div class="tableWrap">
+        <table><thead><tr>
+          <th>วันที่</th><th>Mix Design</th><th>Variant / สูตร</th><th style="text-align:right">คอนกรีต (m³)</th>
+          <th style="text-align:right">ทราย CDE (kg)</th><th style="text-align:right">ทราย CDE (ตัน)</th>
+          <th style="text-align:right">ทรายธรรมดา (kg)</th><th style="text-align:right">ทรายธรรมดา (ตัน)</th>
+          <th style="text-align:right">รวมทราย (ตัน)</th><th>จัดการ</th>
+        </tr></thead><tbody id="fullHistoryTable"></tbody></table>
+      </div>
+      <div class="toolbar" style="margin-top:14px;justify-content:space-between">
+        <span class="muted" id="histResultCount">แสดง 0 รายการ</span>
+        <button class="btn danger sm" id="clearHistoryTab">ล้างประวัติทั้งหมด</button>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- ================= DASHBOARD (Executive style) ================= -->
+<div id="tab-dashboard" class="pageSection">
+<div class="dsh" id="dshRoot">
+<aside class="dNav">
+  <div class="lg"><div class="lgo">S</div><div><b>CDE SAND</b><span>USAGE DASHBOARD</span></div></div>
+  <div class="src" id="dSrc">ข้อมูล: LocalStorage</div>
+  <nav class="mn" id="dMenu">
+    <button class="on" data-go="dKpis">▦ ภาพรวม</button>
+    <button data-go="dBars">▤ คอนกรีตตาม Mix</button>
+    <button data-go="dDonut">◔ สัดส่วนทราย</button>
+    <button data-go="dStack">▥ CDE / Normal รายช่วง</button>
+    <button data-go="dTable">☷ เปรียบเทียบ Mix</button>
+    <button data-go="dTrend">∿ แนวโน้มรายวัน</button>
+    <button data-go="dSide">◉ แจ้งเตือน <em id="dAlBadge">0</em></button>
+  </nav>
+  <div class="goal" id="dGoal"></div>
+</aside>
+<div class="dMain">
+  <div class="dHead">
+    <div>
+      <h2>ภาพรวมการเบิกใช้ทราย</h2>
+      <small id="dSub">CDE & Normal Sand</small>
+    </div>
+    <div class="dFilters">
+      <label class="fl">ช่วงเวลา:
+        <select id="dPeriod">
+          <option value="day">รายวัน</option>
+          <option value="7d">7 วันล่าสุด</option>
+          <option value="30d" selected>30 วันล่าสุด</option>
+          <option value="month">เดือนนี้</option>
+          <option value="year">ปีนี้</option>
+          <option value="all">ทั้งหมด</option>
+        </select>
+      </label>
+      <label class="fl">ถึงวันที่:<input id="dashDate" type="date"></label>
+      <label class="fl">Mix:<select id="dMix"></select></label>
+      <label class="fl">Variant:<select id="dVar"></select></label>
+      <button class="dBtn" id="dashToday">วันนี้</button>
+      <button class="dBtn" id="dClear">↺ ล้าง</button>
+      <button class="dBtn" id="dashExportCsv">📥 CSV</button>
+      <button class="dBtn or" id="dashPrint">⬇ ส่งออก PDF</button>
+    </div>
+  </div>
+
+  <div class="dKpis" id="dKpis"></div>
+
+  <div class="dRow">
+    <div class="dCard"><h4>ปริมาณคอนกรีตตาม Mix <em id="dBarsTag"></em></h4><div id="dBars"></div></div>
+    <div class="dCard"><h4>สัดส่วนทรายตาม Mix <em id="dDonutTag"></em></h4><div id="dDonut"></div></div>
+    <div class="dCard"><h4>สัดส่วน CDE / Normal แบ่ง 4 ช่วง (%) <em id="dStackTag"></em></h4><div id="dStack"></div></div>
+  </div>
+
+  <div class="dRow">
+    <div class="dCard"><h4>เปรียบเทียบตาม Mix กับช่วงก่อนหน้า <em id="dTblTag"></em></h4><div class="dtw" id="dTable"></div></div>
+    <div class="dCard"><h4>แนวโน้มการเบิกทรายรายวัน <em id="dTrendTag"></em></h4><canvas id="dTrend"></canvas></div>
+    <div class="dCard"><h4>สัดส่วนทรายและการแจ้งเตือน</h4><div id="dSide"></div></div>
+  </div>
+</div>
+</div>
+</div>
+
+<div id="tab-system" class="pageSection">
+<section class="card c12">
+  <h3>⚙️ จัดการระบบ & สำรองข้อมูล</h3>
+  <div class="notice">ข้อมูลระบบเก็บใน LocalStorage ของอุปกรณ์นี้ สามารถ Backup / Restore ได้</div>
+  <div class="head">
+    <div><b>สำรองข้อมูล (Backup / Restore)</b><span class="muted">บันทึก JSON หรือนำข้อมูลกลับเข้าเครื่อง</span></div>
+    <div class="toolbar">
+      <button class="btn sm" id="backup">💾 Backup ข้อมูล (JSON)</button>
+      <button class="btn sm" id="restore">📂 Restore ข้อมูล (JSON)</button>
+      <input id="file" type="file" accept=".json,application/json" hidden>
+    </div>
+  </div>
+  <div class="toolbar" style="margin-top:20px;padding-top:16px;border-top:1px solid var(--line)">
+    <button class="btn" id="refresh">↻ Refresh หน้าจอ</button>
+    <button class="btn danger sm" id="reset">รีเซ็ตระบบค่าเริ่มต้น</button>
+  </div>
+</section>
+</div>
+<div class="footer">CDE & Normal Sand Usage Control System · LocalStorage Active</div>
+</main>
+
+<section id="printPage">
+  <div class="printCard">
+    <div class="head">
+      <div><h2 style="margin:0">CDE SAND — PRINT OUT MIX</h2><span class="muted">รายงานคำนวณและตรวจสอบยอดทราย</span></div>
+      <div class="toolbar"><button class="btn sm" id="printBtn">🖨️ พิมพ์หน้านี้</button><button class="btn sm primary" id="closePrintBtn">กลับหน้าหลัก</button></div>
+    </div>
+    <div class="grid" style="margin-top:12px">
+      <div class="card c6"><h4>ยอดทรายในสต็อกเริ่มต้น (kg)</h4>
+        <label>ทราย CDE</label><input id="aCde" type="number" step="0.1" value="0">
+        <label style="margin-top:6px">ทรายปกติ (Normal)</label><input id="aNorm" type="number" step="0.1" value="0">
+      </div>
+      <div class="card c6"><h4>ยอดเบิกจ่ายจริง / รถรับ (kg)</h4>
+        <label>ทราย CDE รวมที่เบิก</label><div id="bCde" style="font-weight:700;padding:6px 0">-</div>
+        <label>ทรายปกติรวมที่เบิก</label><div id="bNorm" style="font-weight:700;padding:6px 0">-</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ADD MIX MODAL -->
+<div class="modalBack" id="mixModal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mixModalTitle">
+    <div class="head">
+      <div>
+        <h3 id="mixModalTitle">🧱 เพิ่ม Mix Design</h3>
+        <div class="muted">กรอกข้อมูล Mix ใหม่ แล้วกดบันทึก</div>
+      </div>
+      <button type="button" class="btn sm" id="closeMixModal">✕ ปิด</button>
+    </div>
+    <form id="mixForm">
+      <div class="formGrid">
+        <div><label>Code *</label><input id="mCode" required placeholder="เช่น 626254C"></div>
+        <div><label>Variant / สูตร *</label><input id="mVariant" required placeholder="เช่น 50%"></div>
+        <div><label>CDE kg/m³ *</label><input id="mCde" type="number" step="0.1" min="0" required placeholder="เช่น 400"></div>
+        <div><label>Normal kg/m³ *</label><input id="mNormal" type="number" step="0.1" min="0" required placeholder="เช่น 400"></div>
+        <div style="grid-column:1/-1"><label>หมายเหตุ</label><input id="mNote" placeholder="รายละเอียดหรือชื่อ Mix"></div>
+      </div>
+      <div class="modalActions">
+        <button type="button" class="btn" id="cancelMix">ยกเลิก</button>
+        <button type="submit" class="btn primary">💾 บันทึก Mix</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+const K_MIX="cde-sand-usage-mixes-v9",K_ENTRIES="cde-sand-usage-entries-v9",K_THEME="cde-sand-theme-v9",K_PRINT="cde-sand-print-v9";
+const defaults=[
+ {id:"m1",code:"241AE011",name:"ตัวอย่าง Mix C1",variant:"50%",cde:403,normal:402,note:"ตัวอย่าง Mix C1",active:true},
+ {id:"m2",code:"626254C",name:"ตัวอย่าง Mix C2",variant:"50%",cde:388,normal:387,note:"ตัวอย่าง Mix C2",active:true},
+ {id:"m3",code:"330020K",name:"ตัวอย่าง Mix C3",variant:"50%",cde:500,normal:300,note:"ตัวอย่าง Mix C3",active:true}
+];
+
+let mixes=[],entries=[],ps={},hidden=false;
+const $=id=>document.getElementById(id);
+const num=v=>parseFloat(v)||0;
+const fmt=(v,d=2)=>(Number(v)||0).toLocaleString("th-TH",{minimumFractionDigits:d,maximumFractionDigits:d});
+const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+const esc=s=>String(s??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
+
+function save(){
+ localStorage.setItem(K_MIX,JSON.stringify(mixes));
+ localStorage.setItem(K_ENTRIES,JSON.stringify(entries));
+ localStorage.setItem(K_THEME,document.body.classList.contains("dark")?"dark":"light");
+ localStorage.setItem(K_PRINT,JSON.stringify(ps));
+}
+function load(){
+ try{
+  const oldMix=JSON.parse(localStorage.getItem("cde-sand-usage-mixes-v8")||"null");
+  const oldEntries=JSON.parse(localStorage.getItem("cde-sand-usage-entries-v8")||"null");
+  mixes=JSON.parse(localStorage.getItem(K_MIX))||oldMix||defaults;
+  entries=JSON.parse(localStorage.getItem(K_ENTRIES))||oldEntries||[];
+  ps=JSON.parse(localStorage.getItem(K_PRINT))||{};
+  mixes=mixes.map(m=>({...m,active:m.active!==false}));
+  if(localStorage.getItem(K_THEME)==="dark")document.body.classList.add("dark");
+ }catch(e){mixes=defaults;entries=[];ps={}}
+}
+function uid(prefix="m"){
+ return prefix+"_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,9);
+}
+function activeMixes(){return mixes.filter(m=>m.active!==false)}
+
+document.querySelectorAll(".navTab").forEach(tab=>{
+ tab.onclick=()=>{
+  document.querySelectorAll(".navTab").forEach(t=>t.classList.remove("active"));
+  document.querySelectorAll(".pageSection").forEach(p=>p.classList.remove("active"));
+  tab.classList.add("active");
+  const target=tab.dataset.page;
+  if($(target))$(target).classList.add("active");
+  $("heroSec").style.display=target==="tab-dashboard"?"none":"";
+  if(target==="tab-chart"){setTimeout(renderChart,50);renderFullHistory()}
+  if(target==="tab-dashboard"){renderDashboard();setTimeout(renderDashboard,60)}
+ };
+});
+
+function options(){
+ const s=$("eMix"),v=s.value;
+ const list=activeMixes();
+ s.innerHTML=list.map(m=>`<option value="${esc(m.id)}">${esc(m.code)} — ${esc(m.name||m.note||m.variant)}</option>`).join("");
+ if(list.some(m=>m.id===v))s.value=v;
+ else if(list[0])s.value=list[0].id;
+}
+function renderMixTable(){
+ if(hidden){$("mixTable").innerHTML="";return}
+ const list=mixes;
+ if(!list.length){$("mixTable").innerHTML='<div class="empty">ยังไม่มี Mix Design กรุณากด ＋ เพิ่ม Mix</div>';return}
+ $("mixTable").innerHTML=`<div class="tableWrap"><table>
+ <thead><tr>
+ <th>Code</th><th>Variant</th><th style="text-align:right">CDE kg/m³</th><th style="text-align:right">Normal kg/m³</th>
+ <th>หมายเหตุ</th><th style="text-align:center">Status</th><th style="text-align:center">จัดการ</th>
+ </tr></thead><tbody>
+ ${list.map(m=>`<tr>
+ <td><input data-field="code" data-id="${esc(m.id)}" value="${esc(m.code)}" style="min-width:150px"></td>
+ <td><input data-field="variant" data-id="${esc(m.id)}" value="${esc(m.variant||"")}" style="min-width:100px"></td>
+ <td><input data-field="cde" data-id="${esc(m.id)}" type="number" step="0.1" min="0" value="${num(m.cde)}" style="min-width:120px;text-align:right"></td>
+ <td><input data-field="normal" data-id="${esc(m.id)}" type="number" step="0.1" min="0" value="${num(m.normal)}" style="min-width:120px;text-align:right"></td>
+ <td><input data-field="note" data-id="${esc(m.id)}" value="${esc(m.note||m.name||"")}" style="min-width:180px"></td>
+ <td style="text-align:center">
+   <button type="button" class="btn sm statusBtn ${m.active!==false?"success":"danger"}" data-status="${esc(m.id)}">${m.active!==false?"ใช้งาน":"ปิดใช้"}</button>
+ </td>
+ <td style="text-align:center"><button type="button" class="btn danger sm" data-del="${esc(m.id)}">ลบ</button></td>
+ </tr>`).join("")}
+ </tbody></table></div>`;
+
+ $("mixTable").querySelectorAll("[data-field]").forEach(inp=>{
+  inp.addEventListener("change",()=>{
+   const m=mixes.find(x=>x.id===inp.dataset.id);if(!m)return;
+   const f=inp.dataset.field;
+   if(f==="cde"||f==="normal")m[f]=Math.max(0,num(inp.value));
+   else m[f]=inp.value.trim();
+   if(f==="note")m.name=m.note||m.code;
+   save();options();preview();renderMixTable();
+  });
+ });
+ $("mixTable").querySelectorAll("[data-status]").forEach(b=>b.onclick=()=>{
+  const m=mixes.find(x=>x.id===b.dataset.status);if(!m)return;
+  m.active=m.active===false;
+  save();renderAll();
+ });
+ $("mixTable").querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{
+  const m=mixes.find(x=>x.id===b.dataset.del);
+  if(!m)return;
+  if(confirm(`ลบ Mix ${m.code} หรือไม่?\nประวัติการเบิกใช้เดิมจะไม่ถูกลบ`)){
+   mixes=mixes.filter(x=>x.id!==m.id);
+   save();renderAll();
+  }
+ });
+}
+function preview(){
+ const m=mixes.find(x=>x.id===$("eMix").value)||activeMixes()[0];
+ const q=num($("eQty").value);
+ if(!m){$("pVariant").textContent="-";$("pCde").textContent="0.0 kg";$("pNorm").textContent="0.0 kg";return}
+ $("pVariant").textContent=m.variant||"-";
+ $("pCde").textContent=fmt(m.cde*q,1)+" kg ("+fmt(m.cde*q/1000,3)+" t)";
+ $("pNorm").textContent=fmt(m.normal*q,1)+" kg ("+fmt(m.normal*q/1000,3)+" t)";
+}
+$("entryForm").onsubmit=e=>{
+ e.preventDefault();
+ const m=mixes.find(x=>x.id===$("eMix").value);
+ if(!m||m.active===false)return alert("กรุณาเลือก Mix ที่ใช้งานอยู่");
+ const q=num($("eQty").value);if(q<=0)return;
+ const cdeKg=m.cde*q,normKg=m.normal*q;
+ entries.push({
+  id:uid("e"),date:$("eDate").value,createdAt:new Date().toISOString(),mixId:m.id,
+  mixCode:m.code,mixName:m.name||m.note||"",mixVariant:m.variant||"STANDARD",qty:q,
+  cdeKg,cdeTon:cdeKg/1000,normalKg:normKg,normalTon:normKg/1000
+ });
+ save();renderAll();$("eQty").value="";preview();alert("บันทึกรายการสำเร็จ!");
+};
+
+function renderHeroStats(){
+ const dSel=$("dashDate").value||today(),day=entries.filter(e=>e.date===dSel);
+ $("heroCde").textContent=fmt(day.reduce((s,e)=>s+num(e.cdeTon),0),3)+" t";
+ $("heroNorm").textContent=fmt(day.reduce((s,e)=>s+num(e.normalTon),0),3)+" t";
+ $("heroAll").textContent=fmt(entries.reduce((s,e)=>s+num(e.cdeTon),0),3)+" t";
+}
+
+/* ================= EXECUTIVE DASHBOARD ================= */
+const PAL=["#38bdf8","#3b82f6","#f2903c","#a78bfa","#22c55e","#facc15","#f472b6","#94a3b8"];
+const C_CDE="#3b82f6",C_NORM="#f2903c";
+const addDays=(iso,n)=>{const d=new Date(iso+"T00:00:00Z");d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)};
+const dayDiff=(a,b)=>Math.round((Date.parse(b+"T00:00:00Z")-Date.parse(a+"T00:00:00Z"))/864e5);
+const agg=l=>{const a={n:l.length,qty:0,cde:0,norm:0};l.forEach(e=>{a.qty+=num(e.qty);a.cde+=num(e.cdeTon);a.norm+=num(e.normalTon)});a.sand=a.cde+a.norm;return a};
+function byMix(l){const m={};l.forEach(e=>{const k=e.mixCode||"-";m[k]??={code:k,qty:0,cde:0,norm:0,n:0};m[k].qty+=num(e.qty);m[k].cde+=num(e.cdeTon);m[k].norm+=num(e.normalTon);m[k].n++});return Object.values(m).map(x=>({...x,sand:x.cde+x.norm}))}
+
+function fillSel(id,list){
+ const s=$(id),v=s.value||"all";
+ s.innerHTML='<option value="all">ทั้งหมด</option>'+list.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join("");
+ s.value=list.includes(v)?v:"all";
+}
+function fillFilters(){
+ const codes=[...new Set([...mixes.map(m=>m.code),...entries.map(e=>e.mixCode)])].filter(Boolean).sort();
+ const vars=[...new Set([...mixes.map(m=>m.variant),...entries.map(e=>e.mixVariant||"STANDARD")])].filter(Boolean).sort();
+ fillSel("dMix",codes);fillSel("dVar",vars);
+}
+function dScope(){
+ const p=$("dPeriod").value,ref=$("dashDate").value||today();
+ let s=ref,e=ref;
+ if(p==="7d")s=addDays(ref,-6);
+ else if(p==="30d")s=addDays(ref,-29);
+ else if(p==="month")s=ref.slice(0,8)+"01";
+ else if(p==="year")s=ref.slice(0,4)+"-01-01";
+ else if(p==="all"){const ds=entries.map(x=>x.date).filter(Boolean).sort();if(ds.length){s=ds[0];e=ds.at(-1)}}
+ const n=dayDiff(s,e)+1;
+ let ps_=null,pe=null;
+ if(p!=="all"){pe=addDays(s,-1);ps_=addDays(pe,-(n-1))}
+ const mixF=$("dMix").value||"all",varF=$("dVar").value||"all";
+ const pick=(a,b)=>entries.filter(x=>x.date>=a&&x.date<=b&&(mixF==="all"||x.mixCode===mixF)&&(varF==="all"||(x.mixVariant||"STANDARD")===varF));
+ return {p,ref,s,e,n,ps:ps_,pe,pick,cur:pick(s,e),prev:ps_?pick(ps_,pe):null};
+}
+function ringSvg(p,color){
+ const C=2*Math.PI*22,d=Math.max(0,Math.min(100,p))/100*C;
+ return `<svg class="ring" viewBox="0 0 56 56"><circle cx="28" cy="28" r="22" fill="none" stroke="#1e2b45" stroke-width="6"/><circle cx="28" cy="28" r="22" fill="none" stroke="${color}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${d.toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 28 28)"/><text x="28" y="31.5" text-anchor="middle" font-size="11" font-weight="700" fill="#e8eefb">${Math.round(p)}%</text></svg>`;
+}
+const dTxt=(c,p)=>{
+ if(!p)return '<span class="mu">ไม่มีข้อมูลช่วงก่อน</span>';
+ const d=(c-p)/p*100;
+ return `<span class="${d>=0?"up":"dn"}">${d>=0?"▲":"▼"} ${fmt(Math.abs(d),1)}% vs ช่วงก่อน</span>`;
+};
+const vsPct=(c,p)=>p?c/p*100:(c>0?100:0);
+
+function renderDashboard(){
+ fillFilters();
+ const S=dScope(),cur=S.cur,prev=S.prev;
+ const A=agg(cur),P=prev?agg(prev):null;
+ const mm=byMix(cur);
+ const periodName={day:"รายวัน","7d":"7 วันล่าสุด","30d":"30 วันล่าสุด",month:"เดือนนี้",year:"ปีนี้",all:"ทั้งหมด"}[S.p];
+ $("dSub").textContent=`${periodName} · ${S.s} ถึง ${S.e} · ${A.n} รายการ`;
+
+ /* ---- KPI cards ---- */
+ const topMix=[...mm].sort((a,b)=>b.qty-a.qty)[0];
+ const avgKg=A.qty?A.sand*1000/A.qty:0,pAvgKg=P&&P.qty?P.sand*1000/P.qty:0;
+ const cdeShare=A.sand?A.cde/A.sand*100:0;
+ const kp=[
+  {t:"Mix ใช้มากที่สุด",v:topMix?esc(topMix.code):"-",r:topMix&&A.qty?topMix.qty/A.qty*100:0,c:C_NORM,s:topMix?`<span class="mu">${fmt(topMix.qty,2)} m³ · ${fmt(topMix.qty/A.qty*100,1)}%</span>`:'<span class="mu">ไม่มีข้อมูล</span>'},
+  {t:"คอนกรีตรวม",v:fmt(A.qty,2)+" m³",r:vsPct(A.qty,P?P.qty:0),c:C_CDE,s:dTxt(A.qty,P?P.qty:0)},
+  {t:"ทราย CDE รวม",v:fmt(A.cde,3)+" t",r:cdeShare,c:C_CDE,s:dTxt(A.cde,P?P.cde:0)},
+  {t:"ทรายธรรมดารวม",v:fmt(A.norm,3)+" t",r:A.sand?100-cdeShare:0,c:C_NORM,s:dTxt(A.norm,P?P.norm:0)},
+  {t:"จำนวนรอบที่เบิก",v:fmt(A.n,0)+" รายการ",r:vsPct(A.n,P?P.n:0),c:"#38bdf8",s:dTxt(A.n,P?P.n:0)},
+  {t:"ทรายรวม CDE + Normal",v:fmt(A.sand,3)+" t",r:vsPct(A.sand,P?P.sand:0),c:"#a78bfa",s:dTxt(A.sand,P?P.sand:0)},
+  {t:"ทรายเฉลี่ยต่อคอนกรีต",v:fmt(avgKg,1)+" kg/m³",r:vsPct(avgKg,pAvgKg),c:"#22c55e",s:dTxt(avgKg,pAvgKg)},
+  {t:"สัดส่วนทราย CDE",v:fmt(cdeShare,1)+"%",r:cdeShare,c:C_CDE,s:`<span class="mu">Normal ${fmt(A.sand?100-cdeShare:0,1)}%</span>`}
+ ];
+ $("dKpis").innerHTML=kp.map(k=>`<div class="kp">${ringSvg(k.r,k.c)}<div><span>${k.t}</span><b>${k.v}</b><small>${k.s}</small></div></div>`).join("");
+
+ /* ---- Bars: concrete by mix ---- */
+ const bars=[...mm].sort((a,b)=>b.qty-a.qty).slice(0,6);
+ if(!bars.length)$("dBars").innerHTML='<div class="dEmpty">ไม่มีข้อมูลในช่วงที่เลือก</div>';
+ else{
+  const mx=bars[0].qty||1,avg=mm.reduce((s,x)=>s+x.qty,0)/mm.length;
+  $("dBars").innerHTML=`<div class="lgd"><span><i style="background:#3b82f6"></i>คอนกรีตที่ผลิต</span><span><i class="m" style="background:var(--d-or)"></i>ค่าเฉลี่ยต่อ Mix</span></div>`+
+   bars.map(b=>`<div class="hb"><span class="hbl" title="${esc(b.code)}">${esc(b.code)}</span><div class="hbt"><div class="hbf" style="width:${(b.qty/mx*100).toFixed(1)}%"></div><i class="hbm" style="left:${Math.min(99,avg/mx*100).toFixed(1)}%"></i></div><b>${fmt(b.qty,2)} m³</b></div>`).join("")+
+   `<div class="dLine"></div>`+
+   [...mm].sort((a,b)=>b.sand-a.sand).slice(0,4).map((b,i)=>`<div class="lst"><i style="background:${PAL[i%PAL.length]}"></i><span>${esc(b.code)}</span><b class="g">${fmt(b.sand,3)} t</b><span class="r">${A.sand?fmt(b.sand/A.sand*100,1):"0.0"}%</span></div>`).join("");
+ }
+ $("dBarsTag").textContent=mm.length?`${mm.length} Mix`:"";
+
+ /* ---- Donut: sand by mix ---- */
+ const ds=[...mm].sort((a,b)=>b.sand-a.sand);
+ let segs=ds.slice(0,5).map((x,i)=>({name:x.code,v:x.sand,c:PAL[i]}));
+ const rest=ds.slice(5).reduce((s,x)=>s+x.sand,0);
+ if(rest>0)segs.push({name:"อื่น ๆ",v:rest,c:"#64748b"});
+ if(!A.sand)$("dDonut").innerHTML='<div class="dEmpty">ไม่มีข้อมูลในช่วงที่เลือก</div>';
+ else{
+  const R=64,CC=2*Math.PI*R;let acc=0;
+  const arcs=segs.map(s=>{const len=s.v/A.sand*CC,gap=segs.length>1?2:0,el=`<circle cx="90" cy="90" r="${R}" fill="none" stroke="${s.c}" stroke-width="26" stroke-dasharray="${Math.max(0,len-gap).toFixed(2)} ${(CC-Math.max(0,len-gap)).toFixed(2)}" stroke-dashoffset="${(-acc).toFixed(2)}" transform="rotate(-90 90 90)"/>`;acc+=len;return el}).join("");
+  $("dDonut").innerHTML=`<div class="dn2"><svg viewBox="0 0 180 180"><circle cx="90" cy="90" r="${R}" fill="none" stroke="#15223b" stroke-width="26"/>${arcs}<text x="90" y="88" text-anchor="middle" font-size="24" font-weight="800" fill="#e8eefb">${fmt(segs[0].v/A.sand*100,1)}%</text><text x="90" y="106" text-anchor="middle" font-size="10" fill="#8a9ab3">${esc(segs[0].name)}</text></svg>
+  <div class="lg">${segs.map(s=>`<div><i style="background:${s.c}"></i><span title="${esc(s.name)}">${esc(s.name)}</span><b>${fmt(s.v/A.sand*100,1)}%</b></div>`).join("")}<div><i style="background:transparent"></i><span style="color:var(--d-mut)">ทรายรวม</span><b style="color:var(--d-mut)">${fmt(A.sand,3)} t</b></div></div></div>`;
+ }
+ $("dDonutTag").textContent=A.sand?fmt(A.sand,2)+" t":"";
+
+ /* ---- Time series (shared by stacked + trend) ---- */
+ const tn=S.n<7?14:S.n,ts=S.n<7?addDays(S.e,-(13)):S.s;
+ const dates=[];for(let i=0;i<tn;i++)dates.push(addDays(ts,i));
+ const g={};S.pick(ts,S.e).forEach(e=>{g[e.date]??={c:0,n:0};g[e.date].c+=num(e.cdeTon);g[e.date].n+=num(e.normalTon)});
+
+ /* ---- Stacked % in 4 periods ---- */
+ const size=Math.ceil(dates.length/4),groups=[];
+ for(let i=0;i<4;i++){const sl=dates.slice(i*size,(i+1)*size);if(!sl.length)continue;let c=0,n=0;sl.forEach(d=>{if(g[d]){c+=g[d].c;n+=g[d].n}});groups.push({label:sl[0].slice(5),c,n})}
+ if(!A.sand&&!Object.keys(g).length)$("dStack").innerHTML='<div class="dEmpty">ไม่มีข้อมูลในช่วงที่เลือก</div>';
+ else $("dStack").innerHTML=`<div class="sk"><div class="sky"><span>100%</span><span>75%</span><span>50%</span><span>25%</span><span>0%</span></div><div class="skw">${groups.map((x,i)=>{const t=x.c+x.n,pc=t?x.c/t*100:0,pn=t?100-pc:0;return `<div class="skc"><div class="skb">${t?`<div class="seg n" style="height:${pn}%">${pn>=9?Math.round(pn)+"%":""}</div><div class="seg c" style="height:${pc}%">${pc>=9?Math.round(pc)+"%":""}</div>`:""}</div><span>ช่วง ${i+1} · ${x.label}</span></div>`}).join("")}</div></div>
+ <div class="lgd" style="margin:12px 0 0"><span><i style="background:${C_NORM}"></i>ทรายธรรมดา</span><span><i style="background:${C_CDE}"></i>ทราย CDE</span></div>`;
+ $("dStackTag").textContent=`${dates[0].slice(5)} – ${dates.at(-1).slice(5)}`;
+
+ /* ---- Comparison table ---- */
+ const pm=prev?byMix(prev):[],pmap={};pm.forEach(x=>pmap[x.code]=x);
+ const cmap={};mm.forEach(x=>cmap[x.code]=x);
+ const codes=[...new Set([...mm.map(x=>x.code),...pm.map(x=>x.code)])].sort((a,b)=>(cmap[b]?.qty||0)-(cmap[a]?.qty||0)||(pmap[b]?.qty||0)-(pmap[a]?.qty||0)).slice(0,8);
+ const ch=(c,p)=>p?`<span class="${c>=p?"up":"dn"}">${c>=p?"+":"−"}${fmt(Math.abs((c-p)/p*100),1)}%</span>`:'<span class="mu">-</span>';
+ if(!codes.length)$("dTable").innerHTML='<div class="dEmpty">ไม่มีข้อมูลในช่วงที่เลือก</div>';
+ else $("dTable").innerHTML=`<table><thead><tr><th>Mix</th><th class="r">ช่วงก่อน (m³)</th><th class="r">ช่วงนี้ (m³)</th><th class="r">เปลี่ยนแปลง</th><th class="r">สัดส่วน</th></tr></thead><tbody>
+ ${codes.map((k,i)=>{const c=cmap[k]?.qty||0,p=pmap[k]?.qty||0;return `<tr><td><i class="dot" style="background:${PAL[i%PAL.length]}"></i>${esc(k)}</td><td class="r">${prev?fmt(p,2):"-"}</td><td class="r"><b>${fmt(c,2)}</b></td><td class="r">${prev?ch(c,p):'<span class="mu">-</span>'}</td><td class="r">${A.qty?fmt(c/A.qty*100,1):"0.0"}%</td></tr>`}).join("")}
+ <tr class="tot"><td>รวมทั้งหมด</td><td class="r">${P?fmt(P.qty,2):"-"}</td><td class="r">${fmt(A.qty,2)}</td><td class="r">${P?ch(A.qty,P.qty):'<span class="mu">-</span>'}</td><td class="r">100%</td></tr></tbody></table>`;
+ $("dTblTag").textContent=prev?`${S.ps.slice(5)}–${S.pe.slice(5)} เทียบ ${S.s.slice(5)}–${S.e.slice(5)}`:"ไม่มีช่วงเปรียบเทียบ";
+
+ /* ---- Trend ---- */
+ const vals=dates.map(d=>g[d]?g[d].c+g[d].n:0);
+ const sumV=vals.reduce((a,b)=>a+b,0);
+ $("dTrendTag").textContent=`เฉลี่ย ${fmt(sumV/dates.length,3)} t/วัน`;
+ drawTrend(dates,vals);
+
+ /* ---- Side: composition + alerts ---- */
+ const rowCp=(name,t,c)=>{const pc=A.sand?t/A.sand*100:0;return `<div class="cp"><div><span>${name}</span><b style="color:${c}">${fmt(pc,1)}% (${fmt(t,3)} t)</b></div><div class="pt"><i style="width:${pc.toFixed(1)}%;background:${c}"></i></div></div>`};
+ const al=[];
+ const usedC=entries.reduce((s,e)=>s+num(e.cdeKg),0),usedN=entries.reduce((s,e)=>s+num(e.normalKg),0);
+ [["ทราย CDE",num(ps.aCde),usedC],["ทรายธรรมดา",num(ps.aNorm),usedN]].forEach(([nm,st,us])=>{
+  if(st>0){
+   const left=st-us,pc=left/st*100;
+   if(left<0)al.push({c:"rd",t:`${nm}เบิกเกินสต็อกเริ่มต้น`,x:`เกิน ${fmt(Math.abs(left),1)} kg จากสต็อก ${fmt(st,1)} kg`});
+   else if(pc<20)al.push({c:"wn",t:`${nm}ใกล้หมดสต็อก`,x:`เหลือ ${fmt(left,1)} kg (${fmt(pc,1)}% ของสต็อกเริ่มต้น)`});
+  }
+ });
+ if(sumV>0){const pi=vals.indexOf(Math.max(...vals));al.push({c:"in",t:"วันที่เบิกทรายสูงสุด",x:`${dates[pi]} · ${fmt(vals[pi],3)} t`})}
+ if(!entries.some(e=>e.date===S.ref))al.push({c:"wn",t:"ยังไม่มีการบันทึกในวันที่อ้างอิง",x:`ไม่พบรายการวันที่ ${S.ref}`});
+ const off=new Set(mixes.filter(m=>m.active===false).map(m=>m.code));
+ const offUsed=[...new Set(cur.filter(e=>off.has(e.mixCode)).map(e=>e.mixCode))];
+ if(offUsed.length)al.push({c:"in",t:"Mix ที่ปิดใช้งานแต่มีรายการเบิก",x:offUsed.slice(0,4).join(", ")});
+ if(!al.length)al.push({c:"ok",t:"ระบบปกติ",x:"ไม่มีการแจ้งเตือน"});
+ $("dSide").innerHTML=`<div class="dSub" style="margin-top:0">ส่วนแบ่งทรายในช่วงที่เลือก</div>${rowCp("ทราย CDE",A.cde,C_CDE)}${rowCp("ทรายธรรมดา",A.norm,C_NORM)}
+ <div class="dSub">การแจ้งเตือน</div>${al.slice(0,4).map(a=>`<div class="al ${a.c}"><div class="ic">${a.c==="ok"?"✓":"!"}</div><div><b>${esc(a.t)}</b><span>${esc(a.x)}</span></div></div>`).join("")}`;
+
+ const nAl=al.filter(a=>a.c==="rd"||a.c==="wn").length;
+ $("dAlBadge").textContent=nAl;$("dAlBadge").style.display=nAl?"":"none";
+ $("dSrc").innerHTML=`ข้อมูล: LocalStorage<br>${fmt(entries.length,0)} รายการ · ${mixes.length} Mix`;
+ const gl=(nm,st,us,c)=>{if(!(st>0))return `<div class="row"><span>${nm}</span><span>ยังไม่ตั้งสต็อก</span></div>`;const left=st-us,pc=us/st*100;return `<div class="row"><span>${nm} เหลือ</span><b style="color:${left<0?"#ff8a94":"#e8eefb"}">${fmt(left/1000,3)} t</b></div><div class="pt"><i style="width:${Math.min(100,pc).toFixed(1)}%;background:${c}"></i></div><div class="row" style="margin-top:4px"><span>เบิกแล้ว ${fmt(pc,1)}%</span><span>${fmt(st/1000,3)} t</span></div>`};
+ const stC=num(ps.aCde),stN=num(ps.aNorm),anySt=stC>0||stN>0;
+ const over=(stC>0&&usedC>stC)||(stN>0&&usedN>stN),near=(stC>0&&usedC/stC>.8)||(stN>0&&usedN/stN>.8);
+ const stBadge=!anySt?'<span class="st" style="background:#1b2a45;color:#8a9ab3">ตั้งสต็อกที่ Print Out Mix</span>':over?'<span class="st" style="background:#3a1620;color:#ff8a94">เบิกเกินสต็อก</span>':near?'<span class="st" style="background:#3a2a10;color:#fbbf60">ใกล้หมดสต็อก</span>':'<span class="st" style="background:#0e2a1b;color:#6ee7a0">● สต็อกปกติ</span>';
+ $("dGoal").innerHTML=`<div class="t">สต็อกทรายคงเหลือ</div>${gl("CDE",stC,usedC,C_CDE)}${gl("Normal",stN,usedN,C_NORM)}${stBadge}`;
+ renderHeroStats();
+}
+function drawTrend(dates,vals){
+ const c=$("dTrend");if(!c)return;
+ const r=c.getBoundingClientRect(),dpr=devicePixelRatio||1,w=Math.max(260,r.width),h=240;
+ c.width=w*dpr;c.height=h*dpr;const x=c.getContext("2d");x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,w,h);
+ const pad={l:44,r:14,t:28,b:26},pw=w-pad.l-pad.r,ph=h-pad.t-pad.b;
+ const mxv=Math.max(...vals),max=Math.max(.001,mxv)*1.2;
+ x.font="10px sans-serif";
+ for(let i=0;i<=4;i++){const y=pad.t+ph*i/4;x.strokeStyle="#1b2a45";x.beginPath();x.moveTo(pad.l,y);x.lineTo(w-pad.r,y);x.stroke();x.fillStyle="#8a9ab3";x.textAlign="right";x.fillText(((4-i)/4*max).toFixed(2),pad.l-6,y+3)}
+ if(mxv<=0){x.textAlign="center";x.fillStyle="#8a9ab3";x.font="12px sans-serif";x.fillText("ไม่มีข้อมูลการเบิกทรายในช่วงนี้",w/2,h/2);return}
+ const px=i=>pad.l+(dates.length===1?pw/2:pw*i/(dates.length-1)),py=v=>pad.t+ph-v/max*ph;
+ const grad=x.createLinearGradient(0,pad.t,0,pad.t+ph);grad.addColorStop(0,"#f2903c66");grad.addColorStop(1,"#f2903c00");
+ x.beginPath();x.moveTo(px(0),pad.t+ph);vals.forEach((v,i)=>x.lineTo(px(i),py(v)));x.lineTo(px(vals.length-1),pad.t+ph);x.closePath();x.fillStyle=grad;x.fill();
+ x.beginPath();vals.forEach((v,i)=>i?x.lineTo(px(i),py(v)):x.moveTo(px(i),py(v)));x.strokeStyle="#f2903c";x.lineWidth=2.5;x.lineJoin="round";x.stroke();
+ if(dates.length<=31)vals.forEach((v,i)=>{x.fillStyle="#f2903c";x.beginPath();x.arc(px(i),py(v),3,0,Math.PI*2);x.fill()});
+ const step=Math.ceil(dates.length/7);x.fillStyle="#8a9ab3";x.textAlign="center";x.font="10px sans-serif";
+ dates.forEach((d,i)=>{if(i%step===0)x.fillText(d.slice(5),px(i),h-8)});
+ const pi=vals.indexOf(mxv),tx=px(pi),ty=py(mxv),label="สูงสุด "+mxv.toFixed(3)+" t";
+ x.font="bold 10px sans-serif";const tw=x.measureText(label).width+14;
+ let bx=Math.min(Math.max(tx-tw/2,pad.l),w-pad.r-tw),by=Math.max(2,ty-26);
+ x.fillStyle="#16a34a";x.beginPath();x.roundRect?x.roundRect(bx,by,tw,18,5):x.rect(bx,by,tw,18);x.fill();
+ x.fillStyle="#fff";x.textAlign="center";x.fillText(label,bx+tw/2,by+12.5);
+ x.fillStyle="#16a34a";x.beginPath();x.arc(tx,ty,4.5,0,Math.PI*2);x.fill();x.strokeStyle="#fff";x.lineWidth=1.5;x.stroke();
+}
+function deleteEntry(){
+ const id=this.dataset.del;
+ if(confirm("ลบรายการนี้หรือไม่?")){entries=entries.filter(e=>e.id!==id);save();renderAll()}
+}
+
+function renderChart(){
+ const c=$("chart");if(!c)return;
+ const r=c.getBoundingClientRect(),dpr=devicePixelRatio||1,w=Math.max(320,r.width),h=320;
+ c.width=w*dpr;c.height=h*dpr;const x=c.getContext("2d");x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,w,h);
+ const g={};
+ entries.forEach(e=>{g[e.date]??={c:0,n:0};g[e.date].c+=num(e.cdeTon);g[e.date].n+=num(e.normalTon)});
+ let dates=Object.keys(g).sort(),f=$("chartFrom").value,t=$("chartTo").value;
+ if(f)dates=dates.filter(d=>d>=f);if(t)dates=dates.filter(d=>d<=t);
+ if(!f&&!t&&dates.length>14)dates=dates.slice(-14);
+ $("chartRange").textContent=dates.length?dates[0]+" ถึง "+dates.at(-1):"ยังไม่มีข้อมูลตามช่วงวันที่เลือก";
+ if(!dates.length){x.fillStyle="#888";x.font="14px sans-serif";x.fillText("ไม่มีข้อมูลการเบิกใช้ทรายในช่วงนี้",w/2-100,h/2);return}
+ const cs=getComputedStyle(document.body),line=cs.getPropertyValue("--line").trim(),mut=cs.getPropertyValue("--muted").trim(),blue=cs.getPropertyValue("--blue").trim(),gold=cs.getPropertyValue("--gold").trim();
+ const pad={l:50,r:20,t:35,b:35},pw=w-pad.l-pad.r,ph=h-pad.t-pad.b,max=Math.max(.001,...dates.map(k=>Math.max(g[k].c,g[k].n)))*1.28;
+ x.strokeStyle=line;x.fillStyle=mut;x.font="11px sans-serif";
+ for(let i=0;i<=4;i++){let y=pad.t+ph*i/4;x.beginPath();x.moveTo(pad.l,y);x.lineTo(w-pad.r,y);x.stroke();x.fillText(((4-i)/4*max).toFixed(2)+" t",5,y+4)}
+ function series(key,color,goldSeries){
+  x.beginPath();dates.forEach((d,i)=>{let px=pad.l+(dates.length===1?pw/2:pw*i/(dates.length-1)),py=pad.t+ph-g[d][key]/max*ph;i?x.lineTo(px,py):x.moveTo(px,py)});x.strokeStyle=color;x.lineWidth=2.5;x.stroke();
+  dates.forEach((d,i)=>{let px=pad.l+(dates.length===1?pw/2:pw*i/(dates.length-1)),py=pad.t+ph-g[d][key]/max*ph;
+   x.fillStyle=color;x.beginPath();x.arc(px,py,4,0,Math.PI*2);x.fill();x.fillStyle="#fff";x.beginPath();x.arc(px,py,2,0,Math.PI*2);x.fill();
+   x.fillStyle=color;x.font="bold 10px sans-serif";x.fillText(g[d][key].toFixed(2),px-11,py+(goldSeries?13:-7));
+   if(!goldSeries){x.fillStyle=mut;x.font="10px sans-serif";x.fillText(d.slice(5),px-13,h-10)}
+  })
+ }
+ series("n",gold,true);series("c",blue,false);
+ x.fillStyle=blue;x.fillRect(pad.l,8,12,12);x.fillStyle=mut;x.font="bold 12px sans-serif";x.fillText("ทราย CDE (ตัน)",pad.l+18,18);
+ x.fillStyle=gold;x.fillRect(pad.l+140,8,12,12);x.fillStyle=mut;x.fillText("ทรายธรรมดา (ตัน)",pad.l+158,18);
+}
+function renderFullHistory(){
+ const q=($("historySearchTab").value||"").toLowerCase();
+ const a=[...entries].sort((x,y)=>(y.date+(y.createdAt||"")).localeCompare(x.date+(x.createdAt||""))).filter(e=>(e.date+" "+(e.mixCode||"")+" "+(e.mixVariant||"")+" "+(e.mixName||"")).toLowerCase().includes(q));
+ $("fullHistoryTable").innerHTML=a.length?a.map(e=>`<tr>
+ <td><b>${esc(e.date)}</b></td><td><b>${esc(e.mixCode)}</b></td><td><span class="badge info">${esc(e.mixVariant||"STANDARD")}</span></td>
+ <td style="text-align:right"><b>${fmt(e.qty,2)}</b></td><td style="text-align:right">${fmt(e.cdeKg,1)}</td>
+ <td style="text-align:right;color:var(--blue);font-weight:700">${fmt(e.cdeTon,3)}</td><td style="text-align:right">${fmt(e.normalKg,1)}</td>
+ <td style="text-align:right;color:var(--gold);font-weight:700">${fmt(e.normalTon,3)}</td><td style="text-align:right;font-weight:700">${fmt(num(e.cdeTon)+num(e.normalTon),3)}</td>
+ <td style="text-align:center"><button type="button" class="btn danger sm" data-del="${esc(e.id)}">ลบ</button></td></tr>`).join("")
+ :'<tr><td colspan="10" class="empty">ไม่พบรายการประวัติการเบิกใช้</td></tr>';
+ $("fullHistoryTable").querySelectorAll("[data-del]").forEach(b=>b.onclick=deleteEntry);
+ const totQty=entries.reduce((s,e)=>s+num(e.qty),0),totCde=entries.reduce((s,e)=>s+num(e.cdeTon),0),totNorm=entries.reduce((s,e)=>s+num(e.normalTon),0);
+ $("histTotalCount").textContent=entries.length+" รายการ";$("histTotalQty").textContent=fmt(totQty,2)+" m³";
+ $("histTotalCde").textContent=fmt(totCde,3)+" t";$("histTotalNorm").textContent=fmt(totNorm,3)+" t";
+ $("histResultCount").textContent=`แสดง ${a.length} จากทั้งหมด ${entries.length} รายการ`;
+}
+function renderAll(){options();renderMixTable();preview();renderHeroStats();renderDashboard();renderFullHistory();renderChart()}
+
+function download(fn,content,mime){
+ const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([content],{type:mime}));a.download=fn;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)
+}
+function csv(rows){return "\ufeff"+rows.map(a=>a.map(v=>`"${String(v??"").replaceAll('"','""')}"`).join(",")).join("\n")}
+function exportHistoryCsv(){
+ download("cde-sand-all-history-"+today()+".csv",csv([["วันที่","MixCode","ชื่อMix","Variant","คอนกรีต(m3)","CDE(kg)","CDE(ton)","Normal(kg)","Normal(ton)","รวมทราย(ton)"],...entries.map(e=>[e.date,e.mixCode,e.mixName,e.mixVariant,e.qty,e.cdeKg,e.cdeTon,e.normalKg,e.normalTon,(num(e.cdeTon)+num(e.normalTon)).toFixed(3)])]),"text/csv;charset=utf-8")
+}
+function exportDashboardCsv(){
+ const S=dScope(),list=S.cur;
+ download("cde-sand-dashboard-"+S.s+"_"+S.e+".csv",csv([["วันที่","MixCode","Variant","คอนกรีต(m3)","CDE(ton)","Normal(ton)"],...list.map(e=>[e.date,e.mixCode,e.mixVariant,e.qty,e.cdeTon,e.normalTon])]),"text/csv;charset=utf-8")
+}
+function exportChartCsv(){
+ const g={};entries.forEach(e=>{g[e.date]??={c:0,n:0};g[e.date].c+=num(e.cdeTon);g[e.date].n+=num(e.normalTon)});
+ let dates=Object.keys(g).sort(),f=$("chartFrom").value,t=$("chartTo").value;if(f)dates=dates.filter(d=>d>=f);if(t)dates=dates.filter(d=>d<=t);
+ download("cde-sand-chart-daily-"+today()+".csv",csv([["วันที่","ทราย CDE (ตัน)","ทรายธรรมดา (ตัน)","รวมทราย (ตัน)"],...dates.map(d=>[d,g[d].c.toFixed(3),g[d].n.toFixed(3),(g[d].c+g[d].n).toFixed(3)])]),"text/csv;charset=utf-8")
+}
+function backup(){download("cde-sand-backup-"+today()+".json",JSON.stringify({version:5,exportedAt:new Date().toISOString(),mixes,entries,printState:ps},null,2),"application/json")}
+
+function openMixModal(){
+ $("mixForm").reset();
+ $("mixModal").classList.add("show");
+ setTimeout(()=>$("mCode").focus(),50);
+}
+function closeMixModal(){$("mixModal").classList.remove("show")}
+$("addMix").onclick=openMixModal;
+$("closeMixModal").onclick=closeMixModal;
+$("cancelMix").onclick=closeMixModal;
+$("mixModal").onclick=e=>{if(e.target===$("mixModal"))closeMixModal()};
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeMixModal()});
+
+$("mixForm").onsubmit=e=>{
+ e.preventDefault();
+ const code=$("mCode").value.trim(),variant=$("mVariant").value.trim(),cde=num($("mCde").value),normal=num($("mNormal").value),note=$("mNote").value.trim();
+ if(!code||!variant)return alert("กรุณากรอก Code และ Variant");
+ if(mixes.some(m=>m.code.toLowerCase()===code.toLowerCase()))return alert("Code นี้มีอยู่แล้ว กรุณาใช้ Code อื่น");
+ const m={id:uid("m"),code,name:note||code,variant,cde,normal,note,active:true};
+ mixes.push(m);save();closeMixModal();renderAll();
+ $("eMix").value=m.id;preview();
+ alert("เพิ่ม Mix Design สำเร็จ");
+};
+
+$("restore").onclick=()=>$("file").click();
+$("file").onchange=e=>{
+ const f=e.target.files[0];if(!f)return;
+ const r=new FileReader();r.onload=ev=>{
+  try{
+   const data=JSON.parse(ev.target.result);
+   if(Array.isArray(data.mixes))mixes=data.mixes.map(m=>({...m,active:m.active!==false}));
+   if(Array.isArray(data.entries))entries=data.entries;
+   if(data.printState)ps=data.printState;
+   save();renderAll();alert("นำเข้าข้อมูลสำเร็จแล้ว!");
+  }catch(err){alert("ไฟล์ไม่ถูกต้อง")}
+  e.target.value="";
+ };r.readAsText(f)
+};
+
+$("eMix").onchange=preview;$("eQty").oninput=preview;
+$("dashDate").onchange=renderDashboard;
+$("dPeriod").onchange=renderDashboard;$("dMix").onchange=renderDashboard;$("dVar").onchange=renderDashboard;
+$("dashToday").onclick=()=>{$("dashDate").value=today();$("dPeriod").value="day";renderDashboard()};
+$("dClear").onclick=()=>{$("dPeriod").value="30d";$("dMix").value="all";$("dVar").value="all";$("dashDate").value=today();renderDashboard()};
+$("dashPrint").onclick=()=>{
+ document.body.classList.add("printDash");
+ const done=()=>{document.body.classList.remove("printDash");window.removeEventListener("afterprint",done)};
+ window.addEventListener("afterprint",done);
+ setTimeout(()=>window.print(),50);
+};
+$("chartFrom").onchange=renderChart;$("chartTo").onchange=renderChart;
+$("chartPreset7").onclick=()=>{let d=new Date();d.setDate(d.getDate()-7);$("chartFrom").value=d.toISOString().slice(0,10);$("chartTo").value=today();renderChart()};
+$("chartPreset14").onclick=()=>{let d=new Date();d.setDate(d.getDate()-14);$("chartFrom").value=d.toISOString().slice(0,10);$("chartTo").value=today();renderChart()};
+$("chartPreset30").onclick=()=>{let d=new Date();d.setDate(d.getDate()-30);$("chartFrom").value=d.toISOString().slice(0,10);$("chartTo").value=today();renderChart()};
+$("chartReset").onclick=()=>{$("chartFrom").value="";$("chartTo").value="";renderChart()};
+$("theme").onclick=()=>{document.body.classList.toggle("dark");save();renderChart()};
+$("toggleMix").onclick=()=>{hidden=!hidden;renderMixTable()};
+$("refresh").onclick=()=>location.reload();
+$("dashExportCsv").onclick=exportDashboardCsv;$("chartExportCsv").onclick=exportChartCsv;$("historyTabCsv").onclick=exportHistoryCsv;
+$("historySearchTab").oninput=renderFullHistory;$("backup").onclick=backup;
+$("clearHistoryTab").onclick=()=>{if(confirm("ล้างประวัติการเบิกใช้ทั้งหมดหรือไม่? (Mix Design จะยังคงอยู่)")){entries=[];save();renderAll()}};
+$("reset").onclick=()=>{if(confirm("รีเซ็ตระบบ Mix + ประวัติทั้งหมดกลับเป็นค่าเริ่มต้นหรือไม่?")){mixes=defaults.map(x=>({...x}));entries=[];ps={};save();renderAll()}};
+$("openPrintBtn").onclick=()=>{$("main").style.display="none";$("printPage").style.display="block";$("bCde").textContent=fmt(entries.reduce((s,e)=>s+num(e.cdeKg),0),1)+" kg";$("bNorm").textContent=fmt(entries.reduce((s,e)=>s+num(e.normalKg),0),1)+" kg"};
+$("closePrintBtn").onclick=()=>{$("printPage").style.display="none";$("main").style.display="block"};
+$("printBtn").onclick=()=>window.print();
+$("aCde").oninput=$("aNorm").oninput=()=>{ps.aCde=num($("aCde").value);ps.aNorm=num($("aNorm").value);save()};
+
+$("dMenu").querySelectorAll("button").forEach(b=>b.onclick=()=>{
+ $("dMenu").querySelectorAll("button").forEach(x=>x.classList.remove("on"));b.classList.add("on");
+ const t=$(b.dataset.go);(t.closest(".dCard")||t).scrollIntoView({behavior:"smooth",block:"start"});
+});
+load();
+$("eDate").value=today();$("dashDate").value=today();
+$("aCde").value=num(ps.aCde);$("aNorm").value=num(ps.aNorm);
+renderAll();
+window.onresize=()=>{renderChart();if($("tab-dashboard").classList.contains("active"))renderDashboard()};
+</script>
+</body>
+</html>
